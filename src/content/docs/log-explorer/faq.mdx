@@ -33,7 +33,7 @@ We are actively working on improving error codes. If you receive a generic error
 
 ## Where is the data stored?
 
-The data is stored in Cloudflare R2. Each Log Explorer dataset is stored on a per-customer level, similar to Cloudflare D1, ensuring that your data is kept separate from that of other customers. In the future, this single-tenant storage model will provide you with the flexibility to create your own retention policies and decide in which regions you want to store your data.
+The data is stored in Cloudflare R2. Each Log Explorer dataset is stored on a per-customer level, similar to Cloudflare D1, ensuring that your data is kept separate from that of other customers. Logs are retained for 30 days.
 
 ## Does Log Explorer support Customer Metadata Boundary?
 
@@ -53,11 +53,11 @@ Log Explorer is available as a paid add-on for any Application Services or Zero 
 
 ## How is Log Explorer billed?
 
-Log Explorer billing is based on the volume of logs indexed and stored, measured in gigabytes (GB). Your charges scale with the amount of log data you choose to retain in Log Explorer. Unlike query-based billing models (for example, BigQuery), charges are not based on how often you search or scan your data. Once logs are ingested and stored, you can query them without additional cost.
+Log Explorer costs $1 per GB ingested. Charges are not based on how often you search or scan your data. Once logs are ingested, you can query them without additional cost.
 
 ## Are logs from attack traffic included in my Log Explorer usage?
 
-Yes. In general, Log Explorer bills based on the total volume of logs ingested and stored, including attack traffic. Since these logs are often critical for investigating security incidents, they are treated the same as all other log data.
+Yes. Log Explorer bills based on the total volume of logs ingested, including attack traffic. Since these logs are often critical for investigating security incidents, they are treated the same as all other log data.
 
 However, logs generated from Layer 7 (L7) DDoS attack traffic are not ingested by default and therefore do not count toward your Log Explorer usage.
 
@@ -107,7 +107,6 @@ After performing the following steps, you will immediately stop incurring additi
    <DashButton url="/?to=/:account/:zone/log-explorer/manage-sources" />
 
 2. Turn off each dataset you no longer need using the toggle. To confirm each operation, select **Stop ingesting logs**.
-
 3. Repeat for all relevant zones.
 
 ### 2. Cancel the Log Explorer subscription

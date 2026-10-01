@@ -1,0 +1,60 @@
+---
+title: Spans
+pcx_content_type: concept
+description: Understand spans captured as requests move through Cloudflare.
+sidebar:
+  order: 3
+products:
+  - observability
+---
+
+A span represents one operation within a trace. Each span records when an operation started and how long it took. Related spans form a hierarchy that shows how a request moved through Cloudflare.
+
+The spans in a trace depend on the products and request path involved. A span appears only when the corresponding operation runs.
+
+## Span reference
+
+| Span                 | What it covers                                                                                                                                                                                                 | What its duration measures                                                                                                                                                                                                                                                                                                     |
+| -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `cloudflare_request` | Cloudflare's processing of an HTTP request. This is the root span for network-level request processing.                                                                                                        | Starts after tracing configuration and sampling are resolved. Ends when Cloudflare releases the request context. Includes the remaining request lifecycle, upstream work, response delivery, and post-processing, but excludes processing before tracing is activated.                                                         |
+| `response`           | Response processing and delivery to the client.                                                                                                                                                                | Usually starts after an upstream or internally generated response becomes available. Ends when Cloudflare releases the request context. Includes response processing, downstream body delivery, and post-processing. It normally excludes time waiting for an upstream response.                                               |
+| `workers_routing`    | The decision to match, skip, or reject a Workers route or custom domain. A `skipped` outcome means a skip or disabled route matched. Requests that are not eligible for Workers routing do not emit this span. | Starts before Workers route evaluation and ends after the routing result is built. It does not include execution of the selected Worker.                                                                                                                                                                                       |
+| `page_rules`         | One evaluation of a configured Page Rules set. A request can contain more than one `page_rules` span.                                                                                                          | Starts before target URL calculation and rule matching. Ends after matched operations are converted to actions. It does not include applying those actions to the request.                                                                                                                                                     |
+| `page_rule`          | One matched Page Rule operation.                                                                                                                                                                               | Starts when Cloudflare begins processing the match and ends after action construction, or after a construction error. It does not include applying the resulting action.                                                                                                                                                       |
+| `cache`              | Backend routing and fetch processing for a request classified as cacheable.                                                                                                                                    | Starts after Cloudflare decodes the upstream control data and classifies the request. Ends in the final logging stage. Includes routing, retries, request and response body transfer, and cache processing. It excludes early request setup and classification.                                                                |
+| `dynamic`            | Backend routing and fetch processing for a request classified as dynamic.                                                                                                                                      | Uses the same boundaries as `cache`. Includes routing, retries, and request and response body transfer after classification.                                                                                                                                                                                                   |
+| `origin`             | One attempt to connect to and exchange HTTP data with the customer origin. Retries create sibling `origin` spans.                                                                                              | Starts after an origin peer is selected. Includes connection acquisition, TCP and TLS setup, request transmission, time to response headers, and response body receipt. Normally ends when the upstream body, trailers, header-only response, or error completes. It excludes origin selection and earlier request processing. |
+| `upstream`           | One cross-colo tiered-cache handoff.                                                                                                                                                                           | Starts after the remote cache peer is selected and covers the connection and HTTP exchange with that cache tier. It excludes upper-tier selection and destination lookup.                                                                                                                                                      |
+
+Successful `origin` and `upstream` spans usually end when the upstream exchange completes. If a span remains open unexpectedly, it ends during final request logging and may report a longer duration.
+
+A trace includes up to eight `origin` attempt spans and eight `upstream` handoff spans. Additional attempts do not emit spans.
+
+## Ruleset phase spans
+
+Ruleset phase spans measure rule execution and application of the phase output. They start after eligibility checks and request-body preparation, and end after Cloudflare applies the resulting actions. A skipped phase does not emit a span.
+
+| Span                                      | Ruleset phase covered                |
+| ----------------------------------------- | ------------------------------------ |
+| `http_request_dynamic_redirect`           | Dynamic Redirect Rules               |
+| `http_request_transform`                  | Early request Transform Rules        |
+| `http_config_settings`                    | Configuration Rules                  |
+| `http_request_origin`                     | Origin Rules                         |
+| `http_request_firewall_custom`            | Custom rules                         |
+| `http_request_firewall_managed`           | Managed rules                        |
+| `http_request_redirect`                   | Request redirect rules               |
+| `http_request_late_transform_managed`     | Managed late request transforms      |
+| `http_request_late_transform`             | Late request transforms              |
+| `http_request_cache_settings`             | Cache Rules                          |
+| `http_request_snippets`                   | Snippets rules                       |
+| `http_custom_errors`                      | Custom Error Rules                   |
+| `http_response_headers_transform_managed` | Managed response header transforms   |
+| `http_response_headers_transform`         | Response Header Transform Rules      |
+| `http_response_compression`               | Compression Rules                    |
+| `http_response_firewall_managed`          | Managed response firewall processing |
+
+## Workers runtime spans
+
+Cloudflare Traces include spans for supported Workers runtime operations, including handler invocations, fetch calls, and binding operations. These spans appear beneath the relevant Workers invocation.
+
+Refer to [Workers spans and attributes](/workers/observability/traces/spans-and-attributes/) for the complete runtime reference. You can also [create custom spans](/workers/observability/traces/custom-spans/) for application-specific operations.
